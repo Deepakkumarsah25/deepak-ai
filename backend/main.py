@@ -1,81 +1,39 @@
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import google.generativeai as genai
-# from dotenv import load_dotenv
-# import os
-
-# # Load .env
-# load_dotenv()
-
-# app = Flask(__name__)
-# CORS(app)
-
-# # API KEY
-# API_KEY = os.getenv("gemini_api_key")
-
-# # Configure Gemini
-# genai.configure(api_key=API_KEY)
-
-# # MODEL
-# model = genai.GenerativeModel("models/gemini-2.5-flash")
-
-# # Home Route
-# @app.route("/")
-# def home():
-#     return jsonify({
-#         "message": "Backend is running"
-#     })
-
-# # Chat Route
-# @app.route("/chat", methods=["POST"])
-# def chat():
-#     try:
-#         data = request.get_json()
-
-#         prompt = data.get("prompt")
-
-#         response = model.generate_content(
-#             f"""
-#             You are Gyani, a virtual assistant created by Deepak Kumar.
-
-#             Rules:
-#             - If someone asks who made you, who created you, or tum ko kisne banaya hai,
-#               reply only: "Mujhe Deepak Kumar ne banaya hai."
-
-#             - Keep answers short and friendly.
-
-#             User Question:
-#             {prompt}
-#             """
-#         )
-
-#         return jsonify({
-#             "response": response.text
-#         })
-
-#     except Exception as e:
-#         return jsonify({
-#             "response": str(e)
-#         })
-
-# # Run App
-# if __name__ == "__main__":
-#     app.run(debug=True)
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 import google.generativeai as genai
 from dotenv import load_dotenv
 import os
 
-# Load Environment
+# =========================
+# LOAD ENVIRONMENT
+# =========================
+
 load_dotenv()
 
-# Flask App
-app = Flask(__name__)
+# =========================
+# FRONTEND PATH
+# =========================
+
+frontend_path = os.path.join(os.path.dirname(__file__), "../frontend")
+
+# =========================
+# FLASK APP
+# =========================
+
+app = Flask(
+    __name__,
+    static_folder=frontend_path,
+    static_url_path=""
+)
+
 CORS(app)
 
-# Gemini Setup
+# =========================
+# GEMINI SETUP
+# =========================
+
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 # =========================
@@ -128,45 +86,193 @@ Become Successful Software Engineer
 """
 
 # =========================
+# FRONTEND ROUTES
+# =========================
+
+@app.route("/")
+def home():
+    return send_from_directory(frontend_path, "index.html")
+
+@app.route("/<path:path>")
+def static_files(path):
+    return send_from_directory(frontend_path, path)
+
+# =========================
 # CHAT ROUTE
 # =========================
 
 @app.route("/chat", methods=["POST"])
 def chat():
+
     try:
+
         data = request.get_json()
+
         prompt = data.get("prompt", "").strip()
+
         prompt_lower = prompt.lower()
 
-        # Fixed Custom Answers
-        if "kisne banaya" in prompt_lower or "who made you" in prompt_lower or "who created you" in prompt_lower or "tumko kisne banaya" in prompt_lower or "creator" in prompt_lower:
-            return jsonify({"response": "Deepak Kumar created me."})
+        # =========================
+        # CREATOR
+        # =========================
 
-        elif any(word in prompt_lower for word in ["skill", "skills", "what skills", "kya aata hai", "technology", "tech stack", "frontend", "backend", "programming", "coding skills", "deepak ka skill kya hai", "what technologies does deepak use"]):
-            return jsonify({"response": "Deepak knows HTML, CSS, JavaScript, React, Node.js, Express.js, MongoDB, Python, Flask, and Tailwind CSS."})
+        if any(word in prompt_lower for word in [
+            "kisne banaya",
+            "who made you",
+            "who created you",
+            "tumko kisne banaya",
+            "creator",
+            "owner"
+        ]):
 
-        elif any(word in prompt_lower for word in ["profession", "job", "work", "career", "developer", "what does deepak do", "deepak kya karta hai", "is deepak a developer"]):
-            return jsonify({"response": "Deepak is a Full Stack Developer."})
+            return jsonify({
+                "response": "Mujhe Deepak Kumar ne banaya hai."
+            })
 
-        elif any(word in prompt_lower for word in ["education", "study", "student", "college", "degree", "btech", "qualification", "what is deepak studying"]):
-            return jsonify({"response": "Deepak is a 3rd year B.Tech student."})
+        # =========================
+        # SKILLS
+        # =========================
 
-        elif any(word in prompt_lower for word in ["hobby", "hobbies", "interest", "pasand", "likes", "what are deepak hobbies"]):
-            return jsonify({"response": "Deepak enjoys coding, cooking, and learning new technologies."})
+        elif any(word in prompt_lower for word in [
+            "skill",
+            "skills",
+            "what skills",
+            "kya aata hai",
+            "technology",
+            "tech stack",
+            "frontend",
+            "backend",
+            "programming",
+            "coding skills",
+            "deepak ka skill kya hai",
+            "what technologies does deepak use"
+        ]):
 
-        elif any(word in prompt_lower for word in ["experience", "project", "projects", "portfolio", "what projects has deepak built"]):
-            return jsonify({"response": "Deepak has built real-world MERN stack projects."})
+            return jsonify({
+                "response": "Deepak ko HTML, CSS, JavaScript, React, Node.js, Express.js, MongoDB, Python, Flask aur Tailwind CSS aata hai."
+            })
 
-        elif any(word in prompt_lower for word in ["personality", "nature", "behavior", "attitude"]):
-            return jsonify({"response": "Deepak is friendly, smart, and hardworking."})
+        # =========================
+        # PROFESSION
+        # =========================
 
-        elif any(word in prompt_lower for word in ["goal", "dream", "future", "aim", "career goal"]):
-            return jsonify({"response": "Deepak's goal is to become a successful software engineer."})
+        elif any(word in prompt_lower for word in [
+            "profession",
+            "job",
+            "work",
+            "career",
+            "developer",
+            "what does deepak do",
+            "deepak kya karta hai",
+            "is deepak a developer"
+        ]):
 
-        elif any(word in prompt_lower for word in ["about deepak", "who is deepak", "tell me about deepak", "deepak kaun hai"]):
-            return jsonify({"response": "Deepak Kumar is a Full Stack Developer and AI enthusiast who builds modern web apps and smart AI systems."})
+            return jsonify({
+                "response": "Deepak ek passionate Full Stack Developer hai."
+            })
 
-        # Gemini Fallback
+        # =========================
+        # EDUCATION
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "education",
+            "study",
+            "student",
+            "college",
+            "degree",
+            "btech",
+            "qualification",
+            "what is deepak studying"
+        ]):
+
+            return jsonify({
+                "response": "Deepak abhi 3rd Year B.Tech Student hai."
+            })
+
+        # =========================
+        # HOBBIES
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "hobby",
+            "hobbies",
+            "interest",
+            "pasand",
+            "likes",
+            "what are deepak hobbies"
+        ]):
+
+            return jsonify({
+                "response": "Deepak ko coding, cooking aur new technology seekhna pasand hai."
+            })
+
+        # =========================
+        # EXPERIENCE
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "experience",
+            "project",
+            "projects",
+            "portfolio",
+            "what projects has deepak built"
+        ]):
+
+            return jsonify({
+                "response": "Deepak ne MERN Stack aur AI based real-world projects banaye hai."
+            })
+
+        # =========================
+        # PERSONALITY
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "personality",
+            "nature",
+            "behavior",
+            "attitude"
+        ]):
+
+            return jsonify({
+                "response": "Deepak friendly, smart aur hardworking person hai."
+            })
+
+        # =========================
+        # GOAL
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "goal",
+            "dream",
+            "future",
+            "aim",
+            "career goal"
+        ]):
+
+            return jsonify({
+                "response": "Deepak ka goal successful software engineer banna hai."
+            })
+
+        # =========================
+        # ABOUT DEEPAK
+        # =========================
+
+        elif any(word in prompt_lower for word in [
+            "about deepak",
+            "who is deepak",
+            "tell me about deepak",
+            "deepak kaun hai"
+        ]):
+
+            return jsonify({
+                "response": "Deepak Kumar ek Full Stack Developer aur AI enthusiast hai jo modern web apps aur smart AI systems banata hai."
+            })
+
+        # =========================
+        # GEMINI RESPONSE
+        # =========================
+
         response = model.generate_content(
             f"""
 You are Gyani AI assistant created by Deepak Kumar.
@@ -194,15 +300,22 @@ User Question:
 {prompt}
 """
         )
+
         reply = response.text.strip()
-        return jsonify({"response": reply})
+
+        return jsonify({
+            "response": reply
+        })
 
     except Exception as e:
-        return jsonify({"response": f"Error: {str(e)}"})
+
+        return jsonify({
+            "response": f"Error: {str(e)}"
+        })
 
 # =========================
 # RUN APP
 # =========================
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=5000)
