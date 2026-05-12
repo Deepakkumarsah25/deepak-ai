@@ -216,6 +216,7 @@ def chat():
             "project",
             "projects",
             "portfolio",
+            "Deepak is virgin or not ? ",
             "what projects has deepak built"
         ]):
 
