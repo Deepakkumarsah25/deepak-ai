@@ -119,14 +119,14 @@ function taskCommand(command) {
     window.open("https://youtube.com/", "_blank");
   } else if (command.includes("open whatsapp")) {
     speak("Opening WhatsApp...");
-    
+
     const link = document.createElement("a");
     link.href = "whatsapp://";
     link.style.display = "none";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  
+
     setTimeout(() => {
       window.location.href = "https://wa.me/";
     }, 1000);
@@ -146,28 +146,38 @@ function taskCommand(command) {
     let date = new Date().toLocaleString(undefined, { day: "numeric", month: "short" });
     speak("The date is " + date);
   } else {
-    //fetch("https://gyani-ai-virtual-assistant.onrender.com/chat", {
-    fetch("http://127.0.0.1:5000/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt: command }) 
+
+  fetch("/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      prompt: command
     })
-    .then(response => response.json())
-.then(data => {
+  })
 
-  const reply = data.response;
+  .then(response => response.json())
 
-  console.log("AI Reply:", reply);
+  .then(data => {
 
-  // Speak response
-  speak(reply);
+    const reply = data.response;
 
-})
-    .catch(error => {
-      console.error("Error:", error);
-      speak("Sorry I couldn’t get a response for your query");
-    });
-  }
+    console.log("AI Reply:", reply);
+
+    speak(reply);
+
+  })
+
+  .catch(error => {
+
+    console.error("Error:", error);
+
+    speak("Sorry I couldn’t get a response for your query");
+
+  });
+
+}
 }
 
 document.addEventListener("DOMContentLoaded", () => {
